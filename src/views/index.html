@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="This is a demo of Web integration
+		of Razorpay in NodeJS"
+      author="Mr. Naresh Vadhavana"
+    />
+    <title>Razorpay Web-Integration</title>
+  </head>
+
+  <body>
+    <hr />
+    <h2>Payment Page</h2>
+
+    <form>
+      <input type="text" placeholder="Enter Order Id..." id="orderId" />
+      <br /><br />
+      <input type="text" placeholder="Enter Amount..." id="amount" />
+      <br /><br />
+      <input
+        type="text"
+        placeholder="Enter Currency... EX: INR"
+        id="currency"
+      />
+      <br /><br />
+    </form>
+
+    <button id="pay-button">Pay Now & Get Access</button>
+    <hr />
+
+    <!--Inside index.html -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      document.getElementById('pay-button').onclick = function (e) {
+        let orderId = document.getElementById('orderId').value;
+        let amount = document.getElementById('amount').value;
+        let currency = document.getElementById('currency').value;
+
+        var options = {
+          key: '',
+          amount: amount,
+          currency: currency,
+          name: 'keval Game Platform',
+          description: 'Pay & Checkout this Course, Upgrade your DSA Skill',
+          order_id: orderId,
+          handler: function (response) {
+            console.log('Response : ', response);
+            alert('This step of Payment Succeeded');
+          },
+          prefill: {
+            //Here we are prefilling random contact
+            contact: '',
+            //name and email id, so while checkout
+            name: '',
+            email: ''
+          },
+          notes: {
+            description: 'Test razorpay payment gateway',
+            language:
+              'Available in 4 major Languages JAVA, C/C++, Python, Javascript',
+            access: 'This course have Lifetime Access'
+          },
+          theme: {
+            color: '#2300a3'
+          }
+        };
+
+        var razorpayObject = new Razorpay(options);
+        console.log(razorpayObject);
+        razorpayObject.on('payment.failed', function (response) {
+          console.log(response);
+          alert('This step of Payment Failed');
+        });
+
+        razorpayObject.open();
+        e.preventDefault();
+      };
+    </script>
+  </body>
+</html>
