@@ -89,6 +89,11 @@ class BotController implements Controller {
       this.validation.deleteBotValidation(),
       this.deleteBot
     );
+
+    this.router.post(
+      `${this.path}/createManualBot/10`,
+      this.createMultipuleBot
+    );
   }
 
   private createBot = async (
@@ -229,24 +234,24 @@ class BotController implements Controller {
       //get any Bot
       // if (bots.length == 0) {
 
-        let query2 = [
-          {
-            $match: {
-              _id: { $nin: busyBotIds },
-              role: USER_CONSTANT.ROLES.user,
-              isBot: true,
-              isBlock: false,
-              $or: [
-                { coins: { $gte: Number(tournament.entryfee) } },
-                // { cash: { $gte: Number(tournament.entryfee) } },
-                // { winCash: { $gte: Number(tournament.entryfee) } },
-                // { bonus: { $gte: Number(tournament.entryfee) } }
-              ]
-            }
-          },
-          { $sample: { size: 1 } } // Shuffle the documents and retrieve the first one
-        ]
-       let bots = await MongoService.aggregate(UserModel, query2)
+      let query2 = [
+        {
+          $match: {
+            _id: { $nin: busyBotIds },
+            role: USER_CONSTANT.ROLES.user,
+            isBot: true,
+            isBlock: false,
+            $or: [
+              { coins: { $gte: Number(tournament.entryfee) } },
+              // { cash: { $gte: Number(tournament.entryfee) } },
+              // { winCash: { $gte: Number(tournament.entryfee) } },
+              // { bonus: { $gte: Number(tournament.entryfee) } }
+            ]
+          }
+        },
+        { $sample: { size: 1 } } // Shuffle the documents and retrieve the first one
+      ]
+      let bots = await MongoService.aggregate(UserModel, query2)
       // }
       Logger.info('getBot :: AFTER :: bots :>> ' + JSON.stringify(bots));
 
@@ -275,7 +280,7 @@ class BotController implements Controller {
             });
 
             break;
-          }else{
+          } else {
             let botData = await createRobot(tournamentId)
             Logger.info(`botData fetching successfully  ::  ${botData}`);
             if (!botData) {
@@ -390,13 +395,13 @@ class BotController implements Controller {
       const req = request as RequestWithUser;
       const adminId = req.user._id;
 
-      const { fullName,coins, isProfileImageUpdated, userId } = request.body;
+      const { fullName, coins, isProfileImageUpdated, userId } = request.body;
       const isProfileImageUpdatedBoolean = Boolean(JSON.parse(isProfileImageUpdated));
 
-            const bot: User = await MongoService.findOne(UserModel, {
+      const bot: User = await MongoService.findOne(UserModel, {
         query: { _id: userId, role: USER_CONSTANT.ROLES.user, isBot: true }
       });
-            Logger.info(`updateBot :: bot ::>> ${JSON.stringify(bot)}`);
+      Logger.info(`updateBot :: bot ::>> ${JSON.stringify(bot)}`);
 
       // check username exists or not
       const isUsernameExists = await MongoService.countDocuments(UserModel, {
@@ -523,6 +528,33 @@ class BotController implements Controller {
 
     return jwt.sign(dataStoredInToken, JWT_SECRET);
   }
+  private createMultipuleBot = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { tournamentId, length } = req.body;
+
+      for (let i = 0; i < length; i++) {
+        await createRobot(tournamentId)
+      }
+
+      return successMiddleware(
+        {
+          message: SUCCESS_MESSAGES.COMMON.CREATE_SUCCESS.replace(':attribute', 'Manual Bot'),
+          data: {}
+        },
+        req,
+        res,
+        next
+      );
+
+    } catch (error) {
+      Logger.error(`There was an issue into deleting a bot.: ${error}`);
+      return next(error);
+    }
+  };
 }
 
 export default BotController;
